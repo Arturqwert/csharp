@@ -4,15 +4,16 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PlayerService.PlayerService.Model;
 
 namespace PlaygroundSharp
 {
     internal interface IPlayerService
     {
-        Player GetPlayerId(int playerId);
-        Collection<Player> GetPlayers();
-        int CreatePlayer (Player player);
-        Player DeletePlayer (int playerId);
-        int AddPointsToPlayer(int playerId, int points);
+        Response<Player> GetPlayerId(int playerId);
+        Response<Collection<Player>> GetPlayers();
+        Response<int> CreatePlayer (Player player);
+        Response<Player> DeletePlayer (int playerId);
+        Response<int> AddPointsToPlayer(int playerId, int points);
     }
 }

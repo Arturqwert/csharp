@@ -1,89 +1,78 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using PlayerService.PlayerService.DataProvider;
+using PlayerService.PlayerService.Model;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 
 namespace PlaygroundSharp
 {
     internal class PlayerService : IPlayerService
     {
-        string path = "C:\\Users\\artur\\source\\repos\\курс\\PlaygroundSharp\\players.json";
+        private IDataProviderJSON provider;
 
-        public int AddPointsToPlayer(int playerId, int points)
+        public PlayerService()
         {
-            var list = LoadPlayers().ToList();
+            provider = new DataProviderJSON();
+        }
+
+        public Response<int> AddPointsToPlayer(int playerId, int points)
+        {
+            var list = provider.Load().ToList();
             var player = list.Select(p => p).Where(p => p.Id == playerId).FirstOrDefault()!;
+
+            if (player is null)
+            {
+                return new Response<int>(Statuses.BAD_REQUEST, $"Player with id {playerId} doesn't exist!", playerId);
+            }
+
             player.Points += points;
-            WrireToFile(list);
+            provider.Save(new Collection<Player>(list));
 
-            return playerId;
+            return new Response<int>(Statuses.OK, $"{points} points has been added to player with id {playerId}.", playerId);
         }
 
-        public int CreatePlayer(Player player)
+        public Response<int> CreatePlayer(Player player)
         {
-            Collection<Player>? list = LoadPlayers();
+            Collection<Player>? list = provider.Load();
             list!.Add(player);
+            provider.Save(new Collection<Player>(list));
 
-            WrireToFile(list.ToList());
-
-            return player.Id;
+            return new Response<int>(Statuses.OK, $"Player '{player}' has been created!", player.Id);
         }
 
-        public Player DeletePlayer(int playerId)
+        public Response<Player> DeletePlayer(int playerId)
         {
-            var list = LoadPlayers().ToList();
+            var list = provider.Load().ToList();
             Player player = list.Select(p => p).Where(p => p.Id == playerId).FirstOrDefault()!;
+
+            if (player is null)
+            {
+                return new Response<Player>(Statuses.BAD_REQUEST, $"Player with id {playerId} doesn't exist!", player!);
+            }
+
             list.Remove(player);
-            WrireToFile(list);
+            provider.Save(new Collection<Player>(list));
 
-            return player;
+            return new Response<Player>(Statuses.OK, $"Player with id {playerId} has been deleted!", player);
         }
 
-        public Player GetPlayerId(int playerId)
+        public Response<Player> GetPlayerId(int playerId)
         {
-            var list = LoadPlayers().ToList();
-            return list.Select(p => p).Where(p => p.Id == playerId).FirstOrDefault()!;
+            var list = provider.Load().ToList();
+            var res = list.Select(p => p).Where(p => p.Id == playerId).FirstOrDefault()!;
+
+            if(res is null)
+            {
+                return new Response<Player>(Statuses.BAD_REQUEST, $"Player with id {playerId} doesn't exist!", res!);
+            }
+
+            return new Response<Player>(Statuses.OK, $"Player with id {playerId}.", res);
         }
 
-        public Collection<Player> GetPlayers()
+        public Response<Collection<Player>> GetPlayers()
         {
             Collection<Player>? list = new();
-            FileInfo fileInfo = new FileInfo(path);
-
-            if (fileInfo.Exists)
-            {
-                list = LoadPlayers();
-            }
-
-            return list!;
-        }
-
-        private Collection<Player> LoadPlayers()
-        {
-            Collection<Player>? list = new();
-
-            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
-            {
-                try
-                {
-                    list = JsonSerializer.Deserialize<Collection<Player>>(fs);
-                }
-                catch { }
-            }
-
-            return list!;
-        }
-    
-        private void WrireToFile(List<Player> list)
-        {
-            using (FileStream fs = new FileStream(path, FileMode.Truncate))
-            {
-                JsonSerializer.Serialize(fs, list);
-            }
+            list = provider.Load();
+        
+            return new Response<Collection<Player>>(Statuses.OK, "Players collection.", list!);
         }
     }
 }

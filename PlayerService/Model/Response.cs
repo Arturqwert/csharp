@@ -4,21 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PlaygroundSharp
+namespace PlayerService.PlayerService.Model
 {
-    internal class Player
+    internal class Response<T>
     {
-        public int Id { get; set; }
-        public int Points { get; set; }
+        public Statuses Status { get; set; }
+        public string Message { get; set; }
+        public T Payload { get; set; }
 
-        public Player(int id, int points)
+        public Response(Statuses status, string message, T payload)
         {
-            Id = id;
-            Points = points;
-        }
-
-        public Player()
-        {
+            this.Status = status;
+            this.Message = message;
+            this.Payload = payload;
         }
 
         public override bool Equals(object? obj)
@@ -33,7 +31,7 @@ namespace PlaygroundSharp
 
         public override string? ToString()
         {
-            return $"{{ Id: {Id}, Points: {Points} }}";
+            return base.ToString();
         }
     }
 }
