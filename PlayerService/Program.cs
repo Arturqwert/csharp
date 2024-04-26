@@ -10,7 +10,8 @@ namespace PlaygroundSharp
         Add,
         Delete,
         Create,
-        Help
+        Help,
+        Clear
     }
 
     internal class Program
@@ -26,27 +27,22 @@ namespace PlaygroundSharp
             {
                 Console.Write("\nType command: ");
 
-                string? input = Console.ReadLine();
+                string? input = Console.ReadLine()!.ToLower();
 
-                if (!Enum.GetNames(typeof(Command)).Select(i => i.ToLower()).ToList().Any(i => input!.Contains(i)))
-                {
-                    Console.WriteLine("Incorrect input! For show commands type \"help\"");
-                }
-
-                if (string.Equals(input, "help", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(input, Command.Help.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
                     PrintCommands();
                 }
 
-                if (string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(input, Command.Exit.ToString(), StringComparison.OrdinalIgnoreCase))
                     Environment.Exit(0);
 
-                if (string.Equals(input, "clear", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(input, Command.Clear.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
                     Console.Clear();
                 }
 
-                if (string.Equals(input, "get", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(input, Command.Get.ToString(), StringComparison.OrdinalIgnoreCase))
                 {
                     var response = service.GetPlayers();
 
@@ -66,7 +62,7 @@ namespace PlaygroundSharp
                     continue;
                 }
 
-                if (input!.StartsWith("create"))
+                if (input!.StartsWith(Command.Create.ToString().ToLower()))
                 {
                     string nick = input[7..];
                     var response = service.CreatePlayer(nick);
@@ -76,7 +72,7 @@ namespace PlaygroundSharp
                         () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
                 }
 
-                if (input.StartsWith("delete"))
+                if (input.StartsWith(Command.Delete.ToString().ToLower()))
                 {
                     var result = InputHandler(Command.Delete, input);
                     if (result is not null)
@@ -89,7 +85,7 @@ namespace PlaygroundSharp
                     }
                 }
 
-                if (input.StartsWith("get"))
+                if (input.StartsWith(Command.Get.ToString().ToLower()))
                 {
                     var result = InputHandler(Command.Get, input);
                     if (result is not null)
@@ -102,7 +98,7 @@ namespace PlaygroundSharp
                     }
                 }
 
-                if (input.StartsWith("add"))
+                if (input.StartsWith(Command.Add.ToString().ToLower()))
                 {
                     var result = InputHandler(Command.Add, input);
                     if (result is not null)
@@ -113,6 +109,11 @@ namespace PlaygroundSharp
                             () => Console.WriteLine(response.Message),
                             () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
                     }
+                }
+
+                if (!Enum.GetNames(typeof(Command)).Select(i => i.ToLower()).ToList().Any(i => input!.Contains(i)))
+                {
+                    Console.WriteLine("Incorrect input! For show commands type \"help\"");
                 }
             }
         }
@@ -127,7 +128,7 @@ namespace PlaygroundSharp
                 case Command.Delete:
                 case Command.Get:
                     {
-                        if (!int.TryParse(input![(command == Command.Delete ? 7 : 4)..], out id))
+                        if (!int.TryParse(input![(command == Command.Delete ? 7 : 3)..], out id))
                         {
                             Console.WriteLine("Incorrect input! Type int value!");
                             return null!;
@@ -168,14 +169,14 @@ namespace PlaygroundSharp
 
         private static void PrintCommands()
         {
-            Console.WriteLine("""
-                    -for quit type "exit".
-                    -get all players type "get".
-                    -delete player type "delete {idPlayer}".
-                    -get player type "get {idPlayer}".
-                    -add points to player type "add {idPlayer}, {points}" .
-                    -create player type "create {idPlayer}, {points}".
-                    -clear for clean console.
+            Console.WriteLine($"""
+                    -for quit type "{Command.Exit}".
+                    -get all players type "{Command.Get}".
+                    -delete player type "{Command.Delete} 'idPlayer'".
+                    -get player type "{Command.Get} 'idPlayer'".
+                    -add points to player type "{Command.Add} 'idPlayer', 'points'".
+                    -create player type "{Command.Create} 'idPlayer', 'points'".
+                    -{Command.Clear} for clean console.
                     """);
         }
     }
