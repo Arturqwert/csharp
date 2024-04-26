@@ -18,7 +18,7 @@ namespace PlaygroundSharp
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Show commands type \"help\"");
+            Console.WriteLine($"Show commands type '{Command.Help}'");
 
             IPlayerService service = new PlayerService();
             PrintCommands();
