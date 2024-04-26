@@ -18,7 +18,7 @@ namespace PlayerService.PlayerService.DataProvider
                 {
                     list = JsonSerializer.Deserialize<Collection<Player>>(fs);
                 }
-                catch { }
+                catch  { }
             }
 
             return list!;

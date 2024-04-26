@@ -12,7 +12,7 @@ namespace PlaygroundSharp
     {
         Response<Player> GetPlayerId(int playerId);
         Response<Collection<Player>> GetPlayers();
-        Response<int> CreatePlayer (Player player);
+        Response<int> CreatePlayer (string nick);
         Response<Player> DeletePlayer (int playerId);
         Response<int> AddPointsToPlayer(int playerId, int points);
     }

@@ -9,12 +9,14 @@ namespace PlayerService.PlayerService.Model
     internal class Player
     {
         public int Id { get; set; }
+        public string? Name { get; set; }
         public int Points { get; set; }
 
-        public Player(int id, int points)
+        public Player(int id, int points, string name)
         {
             Id = id;
             Points = points;
+            Name = name;
         }
 
         public Player()
@@ -33,7 +35,7 @@ namespace PlayerService.PlayerService.Model
 
         public override string? ToString()
         {
-            return $"{{ Id: {Id}, Points: {Points} }}";
+            return $"{{ Id: {Id}, Name: {Name}, Points: {Points}.}}";
         }
     }
 }

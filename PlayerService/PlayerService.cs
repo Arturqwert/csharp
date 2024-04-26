@@ -7,6 +7,7 @@ namespace PlaygroundSharp
     internal class PlayerService : IPlayerService
     {
         private IDataProviderJSON provider;
+        private int counter = 1;
 
         public PlayerService()
         {
@@ -29,13 +30,21 @@ namespace PlaygroundSharp
             return new Response<int>(Statuses.OK, $"{points} points has been added to player with id {playerId}.", playerId);
         }
 
-        public Response<int> CreatePlayer(Player player)
+        public Response<int> CreatePlayer(string nick)
         {
             Collection<Player>? list = provider.Load();
-            list!.Add(player);
+
+            if (list.Count > 0)
+            {
+                var maxId = list.Max(p => p.Id);
+                counter = ++maxId;
+            }
+
+            var newPlayer = new Player(counter, 0, nick);
+            list!.Add(newPlayer);
             provider.Save(new Collection<Player>(list));
 
-            return new Response<int>(Statuses.OK, $"Player '{player}' has been created!", player.Id);
+            return new Response<int>(Statuses.OK, $"Player '{newPlayer}' has been created!", newPlayer.Id);
         }
 
         public Response<Player> DeletePlayer(int playerId)
@@ -71,7 +80,12 @@ namespace PlaygroundSharp
         {
             Collection<Player>? list = new();
             list = provider.Load();
-        
+            
+            if (list.Count == 0)
+            {
+                return new Response<Collection<Player>>(Statuses.OK, "Players collection is empty.", list!);
+            }
+
             return new Response<Collection<Player>>(Statuses.OK, "Players collection.", list!);
         }
     }

@@ -3,9 +3,10 @@
 namespace PlaygroundSharp
 {
     public enum Command
-    { 
+    {
         Exit,
         Get,
+        GetAll,
         Add,
         Delete,
         Create,
@@ -27,7 +28,7 @@ namespace PlaygroundSharp
 
                 string? input = Console.ReadLine();
 
-                if(!Enum.GetNames(typeof(Command)).Select(i => i.ToLower()).ToList().Any(i => input!.Contains(i)))
+                if (!Enum.GetNames(typeof(Command)).Select(i => i.ToLower()).ToList().Any(i => input!.Contains(i)))
                 {
                     Console.WriteLine("Incorrect input! For show commands type \"help\"");
                 }
@@ -49,66 +50,111 @@ namespace PlaygroundSharp
                 {
                     var response = service.GetPlayers();
 
-                    CommandHandler(response, 
-                        () => response.Payload.ToList().ForEach(p => Console.WriteLine(p)), 
+                    if (response.Payload.Count == 0)
+                    {
+                        CommandHandler(response,
+                        () => Console.WriteLine($"{response.Message}"),
                         () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                    }
+                    else
+                    {
+                        CommandHandler(response,
+                        () => response.Payload.ToList().ForEach(p => Console.WriteLine(p)),
+                        () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                    }
+
                     continue;
                 }
 
                 if (input!.StartsWith("create"))
                 {
-                    string parameters = input[7..];
-                    string[] arrayParams = parameters.Split(',');
-                    var response = service.CreatePlayer(new Player(int.Parse(arrayParams[0]), int.Parse(arrayParams[1])));
+                    string nick = input[7..];
+                    var response = service.CreatePlayer(nick);
 
-                    CommandHandler(response, 
-                        () => Console.WriteLine(response.Message), 
+                    CommandHandler(response,
+                        () => Console.WriteLine(response.Message),
                         () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
                 }
 
                 if (input.StartsWith("delete"))
                 {
-                    int id;
-                    var isParsed = int.TryParse(input[7..], out id);
-
-                    if (!isParsed)
+                    var result = InputHandler(Command.Delete, input);
+                    if (result is not null)
                     {
-                        Console.WriteLine("Incorrect input! Type int value!");
-                    }
-                    else
-                    {
-                        var response = service.DeletePlayer(id);
+                        var response = service.DeletePlayer((int)result[0]);
 
-                        CommandHandler(response, 
-                            () => Console.WriteLine(response.Message), 
+                        CommandHandler(response,
+                            () => Console.WriteLine(response.Message),
                             () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
                     }
                 }
 
                 if (input.StartsWith("get"))
                 {
-                    string param = input[4..];
-                    var response = service.GetPlayerId(int.Parse(param));
+                    var result = InputHandler(Command.Get, input);
+                    if (result is not null)
+                    {
+                        var response = service.GetPlayerId((int)result[0]);
 
-                    CommandHandler(response, 
-                        () => Console.WriteLine(response.Payload), 
-                        () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                        CommandHandler(response,
+                            () => Console.WriteLine(response.Payload),
+                            () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                    }
                 }
 
                 if (input.StartsWith("add"))
                 {
-                    string parameters = input[4..];
-                    string[] arrayParams = parameters.Split(',');
-                    var response = service.AddPointsToPlayer(int.Parse(arrayParams[0]), int.Parse(arrayParams[1]));
+                    var result = InputHandler(Command.Add, input);
+                    if (result is not null)
+                    {
+                        var response = service.AddPointsToPlayer((int)result[0], (int)result[1]);
 
-                    CommandHandler(response,
-                        () => Console.WriteLine(response.Message), 
-                        () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                        CommandHandler(response,
+                            () => Console.WriteLine(response.Message),
+                            () => Console.WriteLine($"{response.Status} {Environment.NewLine}{response.Message}"));
+                    }
                 }
             }
         }
 
-        private static void CommandHandler<T>(Response<T> response,  Action success, Action error)
+        private static object[] InputHandler(Command command, string? input)
+        {
+            int id = 0;
+            int points = 0;
+
+            switch (command)
+            {
+                case Command.Delete:
+                case Command.Get:
+                    {
+                        if (!int.TryParse(input![(command == Command.Delete ? 7 : 4)..], out id))
+                        {
+                            Console.WriteLine("Incorrect input! Type int value!");
+                            return null!;
+                        }
+                        
+                        return new object[] { id };
+                    }
+
+                case Command.Add:
+                    {
+                        string parameters = input![4..];
+                        string[] arrayParams = parameters.Split(',');
+
+                        if (arrayParams.Length != 2 || !int.TryParse(arrayParams[0], out id) || !int.TryParse(arrayParams[1], out points))
+                        {
+                            Console.WriteLine("Incorrect input! Type int value for id and points!");
+                            return null!;
+                        }
+                      
+                        return new object[] { id, points };
+                    }
+            }
+
+            return null!;
+        }
+
+        private static void CommandHandler<T>(Response<T> response, Action success, Action error)
         {
             if (response.Status == Statuses.OK)
             {
