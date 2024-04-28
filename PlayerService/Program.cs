@@ -123,36 +123,40 @@ namespace PlaygroundSharp
             int id = 0;
             int points = 0;
 
-            switch (command)
+            return command switch
             {
-                case Command.Delete:
-                case Command.Get:
-                    {
-                        if (!int.TryParse(input![(command == Command.Delete ? 7 : 3)..], out id))
-                        {
-                            Console.WriteLine("Incorrect input! Type int value!");
-                            return null!;
-                        }
-                        
-                        return new object[] { id };
-                    }
+                Command.Delete => TryParseInput(input!, 7, out id) ? new object[] { id } : null!,
+                Command.Get => TryParseInput(input!, 3, out id) ? new object[] { id } : null!,
+                Command.Add => TryParseInputForAdd(input!, 4, out id, out points) ? new object[] { id, points } : null!,
+                _ => null!
+            } ;
 
-                case Command.Add:
-                    {
-                        string parameters = input![4..];
-                        string[] arrayParams = parameters.Split(',');
+            bool TryParseInput(string input, int index, out int id)
+            {
+                if (!int.TryParse(input![index..], out id))
+                {
+                    Console.WriteLine("Incorrect input! Type int value!");
+                    return false;
+                }
 
-                        if (arrayParams.Length != 2 || !int.TryParse(arrayParams[0], out id) || !int.TryParse(arrayParams[1], out points))
-                        {
-                            Console.WriteLine("Incorrect input! Type int value for id and points!");
-                            return null!;
-                        }
-                      
-                        return new object[] { id, points };
-                    }
+                return true;
             }
 
-            return null!;
+            bool TryParseInputForAdd(string input, int index, out int id, out int points)
+            {
+                id = 0;
+                points = 0;
+                string parameters = input![index..];
+                string[] arrayParams = parameters.Split(',');
+
+                if (arrayParams.Length != 2 || !int.TryParse(arrayParams[0], out id) || !int.TryParse(arrayParams[1], out points))
+                {
+                    Console.WriteLine("Incorrect input! Type int value for id and points!");
+                    return false;
+                }
+
+                return true;
+            }
         }
 
         private static void CommandHandler<T>(Response<T> response, Action success, Action error)
